@@ -4,21 +4,37 @@
 #include <stdint.h>
 
 #if defined(recursive)
-#define clz(x) clz2(x, 0)
-static const int mask[] = {0, 8, 12, 14};
-static const int magic[] = {2, 1, 0, 0};
 
 //static inline __attribute((always_inline))
-unsigned clz2(uint32_t x,int c)
+unsigned clz(uint32_t x)
 {
-    // *INDENT-OFF*
-    if (!x && !c) return 32;
-
-    uint32_t upper = (x >> (16 >> c));
-    uint32_t lower = (x & (0xFFFF>>mask[c]));
-    if (c == 3) return upper ? magic[upper] : 2 + magic[lower];
-    return upper ? clz2(upper, c + 1) : (16 >> (c)) + clz2(lower, c + 1);
-    // *INDENT-ON*
+    __asm__ __volatile__(
+        ".intel_syntax noprefix\n\t"
+        "mov rsi, 16\n\t"
+        "mov rdx, 0\n\t"
+        "test rdi, rdi\n\t"
+        "je end\n\t"
+        "start:\n\t"
+        "test rsi,rsi\n\t"
+        "je end\n\t"
+        "mov r9, rdi\n\t"
+        "mov rcx, rsi\n\t"
+        "shr r9, cl\n\t"
+        "test r9, r9\n\t"
+        "je nxt\n\t"
+        "mov rdi, r9\n\t"
+        "shr rsi, 1\n\t"
+        "jmp start\n\t"
+        "nxt:\n\t"
+        "add rdx, rsi\n\t"
+        "shr rsi, 1\n\t"
+        "jmp start\n\t"
+        "end:\n\t"
+        "mov rax, rdx\n\t"
+        ".att_syntax\n\t"
+    );
+    register int i asm("rax");
+    return i;
 }
 
 #elif defined(iteration)
@@ -72,11 +88,8 @@ unsigned clz(uint32_t x)
 }
 
 #elif defined(harley)
-
-static inline __attribute((always_inline))
 unsigned clz(uint32_t x)
 {
-#ifdef CTZ
     // *INDENT-OFF*
     static uint8_t const Table[] = {
         0xFF,    0, 0xFF,   15, 0xFF,    1,   28, 0xFF,
@@ -90,31 +103,45 @@ unsigned clz(uint32_t x)
     };
     // *INDENT-ON*
 
-#else
-    // *INDENT-OFF*
-    static uint8_t const Table[] = {
-        32, 31,  0, 16,  0, 30,  3, 0, 15,  0,  0,  0, 29, 10, 2,  0,
-         0,  0, 12, 14, 21,  0, 19, 0,  0, 28,  0, 25,  0,  9, 1,  0,
-        17,  0,  4,  0,  0,  0, 11, 0, 13, 22, 20,  0, 26,  0, 0, 18,
-         5,  0,  0, 23,  0, 27,  0, 6,  0, 24,  7,  0,  8,  0, 0,  0
-    };
-    // *INDENT-ON*
-#endif
-
-    /* Propagate leftmost 1-bit to the right */
-    x = x | (x >> 1);
-    x = x | (x >> 2);
-    x = x | (x >> 4);
-    x = x | (x >> 8);
-    x = x | (x >> 16);
-
-    /* x = x * 0x6EB14F9 */
-    x = (x << 3) - x;   /* Multiply by 7. */
-    x = (x << 8) - x;   /* Multiply by 255. */
-    x = (x << 8) - x;   /* Again. */
-    x = (x << 8) - x;   /* Again. */
-
-    return Table[(x >> 26)];
+    __asm__ __volatile__(
+        ".intel_syntax noprefix\n\t"
+        /*
+              "mov rax, 0\n\t"
+              "mov rdi, 0\n\t"
+              "syscall\n\t"
+        */
+        "mov eax, edi\n\t"
+        "shr edi, 1\n\t"
+        "or eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shr edi, 2\n\t"
+        "or eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shr edi, 4\n\t"
+        "or eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shr edi, 8\n\t"
+        "or eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shr edi, 16\n\t"
+        "or eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shl eax, 3\n\t"
+        "sub eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shl eax, 8\n\t"
+        "sub eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shl eax, 8\n\t"
+        "sub eax, edi\n\t"
+        "mov edi, eax\n\t"
+        "shl eax, 8\n\t"
+        "sub eax, edi\n\t"
+        "shr eax, 26\n\t"
+        ".att_syntax\n\t"
+    );
+    register uint8_t  i asm("al");
+    return 31 - Table[i];
 }
 #endif
 
