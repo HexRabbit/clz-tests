@@ -10,30 +10,30 @@ unsigned clz(uint32_t x)
 {
     __asm__ __volatile__(
         ".intel_syntax noprefix\n\t"
-        "mov rsi, 16\n\t"
-        "mov rdx, 0\n\t"
-        "test rdi, rdi\n\t"
+        "mov esi, 16\n\t"
+        "mov edx, 0\n\t"
+        "test edi, edi\n\t"
         "je end\n\t"
         "start:\n\t"
-        "test rsi,rsi\n\t"
+        "test esi,esi\n\t"
         "je end\n\t"
-        "mov r9, rdi\n\t"
-        "mov rcx, rsi\n\t"
-        "shr r9, cl\n\t"
-        "test r9, r9\n\t"
+        "mov r9d, edi\n\t"
+        "mov ecx, esi\n\t"
+        "shr r9d, cl\n\t"
+        "test r9d, r9d\n\t"
         "je nxt\n\t"
-        "mov rdi, r9\n\t"
-        "shr rsi, 1\n\t"
+        "mov edi, r9d\n\t"
+        "shr esi, 1\n\t"
         "jmp start\n\t"
         "nxt:\n\t"
-        "add rdx, rsi\n\t"
-        "shr rsi, 1\n\t"
+        "add edx, esi\n\t"
+        "shr esi, 1\n\t"
         "jmp start\n\t"
         "end:\n\t"
-        "mov rax, rdx\n\t"
+        "mov eax, edx\n\t"
         ".att_syntax\n\t"
     );
-    register int i asm("rax");
+    register unsigned i asm("eax");
     return i;
 }
 
@@ -143,6 +143,21 @@ unsigned clz(uint32_t x)
     register uint8_t  i asm("al");
     return 31 - Table[i];
 }
+
+#elif defined(hardware)
+
+static inline __attribute((always_inline))
+unsigned clz(uint32_t x)
+{
+    __asm__ __volatile__(
+        ".intel_syntax noprefix\n\t"
+        "lzcnt eax, edi\n\t"
+        ".att_syntax\n\t"
+    );
+    register unsigned i asm("eax");
+    return i;
+}
+
 #endif
 
 #endif

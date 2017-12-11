@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS_common ?= -Wall -std=gnu99 -g -DDEBUG -O0
+CFLAGS_common ?= -Wall -std=gnu99 -g -DDEBUG
 ifeq ($(strip $(PROFILE)),1)
 CFLAGS_common += -Dcorrect
 endif
@@ -12,7 +12,8 @@ EXEC = \
 	binary \
 	byte \
 	recursive \
-	harley
+	harley \
+	hardware
 
 deps := $(EXEC:%=.%.o.d)
 
@@ -36,7 +37,7 @@ run: $(EXEC)
 		taskset -c 1 ./$$method 67100000 67116384; \
 	done
 
-plot: iteration.txt iteration.txt binary.txt byte.txt harley.txt
+plot: iteration.txt iteration.txt binary.txt byte.txt harley.txt hardware.txt
 	gnuplot scripts/runtime.gp
 
 .PHONY: clean

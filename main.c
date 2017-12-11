@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
         assert((sizeof(uint32_t) * 8) == clz(0));
         for (uint32_t i = 0; i < 31; i++) {
             printf("%u:%d \n", 1 << i, clz(1 << i));
-            for (uint32_t j = (1 << i); j < (1 << (i + 1)); j++) {
+            for (uint32_t j = (1 << i); j < ((uint32_t)1 << (i + 1)); j++) {
                 assert( __builtin_clz (j) == clz(j));
             }
         }
@@ -95,7 +95,11 @@ int main(int argc, char *argv[])
     output = fopen("binary.txt","a");
 #elif defined(harley)
     output = fopen("harley.txt","a");
+#elif defined(hardware)
+    output = fopen("hardware.txt","a");
 #endif
+    assert(output);
+
     uint64_t timecall;
     for (uint32_t i = min; i < max; i++) {
         timecall = 0;
@@ -111,7 +115,7 @@ int main(int argc, char *argv[])
         }
         time_all += (timecall / 100);
         fprintf(output, "%d %lu cycles\n", i, timecall / 100);
-        printf("%d %lu cycles\n", i, timecall / 100);
+//        printf("%d %lu cycles\n", i, timecall / 100);
     }
 
     fclose(output);

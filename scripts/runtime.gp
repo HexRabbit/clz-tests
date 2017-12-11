@@ -12,5 +12,5 @@ plot [:][:500]'iteration.txt' using 1:2 with points title 'iteration',\
 'byte.txt' using 1:2 with points title 'byte shift',\
 'binary.txt' using 1:2 with points title 'bit mask',\
 'recursive.txt' using 1:2 with points title 'recursive',\
-'harley.txt' using 1:2 with points title 'harley'
-
+'harley.txt' using 1:2 with points title 'harley',\
+'hardware.txt' using 1:2 with points title 'hardware'
